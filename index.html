@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mohit Srivastav</title>
+    <style>
+      :root { --max-w:900px; --muted:#666; --accent:#065fd4; --bg:#fafbfc }
+      body { font-family: Arial, Helvetica, sans-serif; line-height: 1.6; max-width: var(--max-w); margin: 24px auto; padding: 0 16px; color:#222; background: #fff }
+      .ig-header { text-align:center; margin-bottom:10px }
+      .profile-row{ display:flex; gap:14px; align-items:center; justify-content:center }
+      img.profile { width:120px; height:120px; object-fit:cover; border-radius:50%; border:2px solid #fff; box-shadow:0 2px 6px rgba(0,0,0,.08) }
+      .profile-info { max-width:560px; text-align:left }
+      .name-row{ display:flex; gap:10px; align-items:center }
+      h1{ margin:0; font-size:22px }
+      .handle{ color:#666; margin-top:4px }
+      .edit-actions button{ margin-left:6px }
+
+      /* connected sections look */
+      main { background: var(--bg); padding: 14px 18px; border-radius: 10px; opacity: 0; transform: translateY(8px); transition: opacity .45s ease, transform .45s ease }
+      body.content-visible main { opacity: 1; transform: none }
+
+      /* splash / welcome overlay */
+      .splash { position: fixed; inset: 0; display:flex; align-items:center; justify-content:center; background: radial-gradient(1200px 600px at 10% 20%, rgba(255,107,107,0.08), transparent 8%), radial-gradient(900px 400px at 90% 80%, rgba(102,179,255,0.06), transparent 10%), linear-gradient(180deg,#fff7fb 0%, #f0f9ff 100%); z-index: 9999; transition: opacity .6s ease, visibility .6s; }
+      .splash.hidden{ opacity:0; visibility:hidden }
+      .splash-inner { text-align:center; display:flex; flex-direction:column; gap:12px; align-items:center; padding:28px; border-radius:14px; box-shadow:0 18px 48px rgba(8,20,50,0.12); backdrop-filter: blur(6px) saturate(120%); }
+      .splash-title{ font-size:44px; margin:0; font-weight:800; background: linear-gradient(90deg,#ff6b6b,#ffd93d,#6be4a9,#66b3ff,#c39eff); -webkit-background-clip: text; background-clip: text; color: transparent; text-shadow:0 6px 18px rgba(11,36,71,0.06); animation: pop .9s cubic-bezier(.2,.9,.3,1) both }
+      .splash .sub{ color:#475569; margin:0 }
+      .enter-btn{ margin-top:12px; padding:10px 18px; border-radius:999px; border:none; cursor:pointer; font-weight:700; box-shadow:0 8px 18px rgba(6,95,212,0.12); transform:translateY(0); transition: transform .18s ease, box-shadow .18s ease, opacity .18s; background: linear-gradient(90deg,#065fd4,#7b61ff); color:#fff }
+      .enter-btn:hover{ transform:translateY(-3px); box-shadow:0 12px 26px rgba(6,95,212,0.16) }
+
+      /* Hero + card styles for professional look */
+      .hero{ display:flex; gap:20px; align-items:center; justify-content:space-between; padding:28px; border-radius:12px; background: linear-gradient(90deg, rgba(6,95,212,0.06), rgba(123,97,255,0.04)); margin-bottom:18px }
+      .hero-left{ max-width:66% }
+      .hero h2{ margin:0; font-size:28px; color:#0b2447 }
+      .hero p.lead{ margin:8px 0 0; color:#475569 }
+      .hero .cta{ margin-top:12px }
+      .card{ background:#fff; padding:16px; border-radius:12px; box-shadow:0 8px 24px rgba(11,36,71,0.04); margin-bottom:12px }
+      .grid{ display:grid; grid-template-columns: repeat(auto-fit,minmax(220px,1fr)); gap:12px }
+      @media (max-width:800px){ .hero{ flex-direction:column; text-align:center } .hero-left{ max-width:100% } }
+
+      /* cartoon avatar + ring */
+      .avatar-wrap{ position:relative; width:120px; height:120px }
+      .avatar{ width:100%; height:100%; object-fit:cover; border-radius:50%; box-shadow:0 6px 18px rgba(2,6,23,0.12); transform-origin:center; animation: bounce 1.1s cubic-bezier(.2,.9,.3,1) both }
+      .ring{ position:absolute; inset:0; border-radius:50%; box-shadow:0 0 0 6px rgba(6,95,212,0.06); pointer-events:none; animation: ringPulse 1.6s ease-in-out infinite }
+
+      /* confetti dots */
+      .confetti{ position:relative; width:260px; height:34px }
+      .confetti .dot{ position:absolute; width:10px; height:10px; border-radius:50%; opacity:0; transform:translateY(0) scale(.8) }
+      .confetti .d1{ background:#ff6b6b; left:12%; animation: confA 1.6s ease forwards }
+      .confetti .d2{ background:#ffd93d; left:30%; animation: confB 1.6s .08s ease forwards }
+      .confetti .d3{ background:#6be4a9; left:48%; animation: confC 1.6s .14s ease forwards }
+      .confetti .d4{ background:#66b3ff; left:66%; animation: confB 1.6s .22s ease forwards }
+      .confetti .d5{ background:#c39eff; left:84%; animation: confA 1.6s .3s ease forwards }
+      .confetti .d6{ background:#ff9f7a; left:6%; animation: confC 1.6s .06s ease forwards }
+      .confetti .d7{ background:#9be7ff; left:92%; animation: confB 1.6s .26s ease forwards }
+
+      /* typing effect for subtitle */
+      .typing{ display:inline-block; overflow:hidden; white-space:nowrap; max-width:0; animation: typing 1.8s steps(22,end) forwards, blink .7s step-end infinite 2s }
+
+      @keyframes pop { 0%{ transform: scale(.92); opacity:0 } 60%{ transform: scale(1.06); opacity:1 } 100%{ transform: scale(1); opacity:1 } }
+      @keyframes bounce { 0%{ transform: translateY(8px) scale(.98) } 40%{ transform: translateY(-8px) scale(1.02) } 70%{ transform: translateY(0) scale(1) } 100%{ transform: translateY(0) } }
+      @keyframes ringPulse { 0%{ transform: scale(.98); opacity:.9 } 50%{ transform: scale(1.06); opacity:.65 } 100%{ transform: scale(.98); opacity:.9 } }
+      @keyframes confA { 0%{ opacity:0; transform:translateY(0) scale(.6) } 30%{ opacity:1 } 100%{ transform:translateY(-30px) scale(1); opacity:0 } }
+      @keyframes confB { 0%{ opacity:0; transform:translateY(0) scale(.6) } 25%{ opacity:1 } 100%{ transform:translateY(-24px) scale(1); opacity:0 } }
+      @keyframes confC { 0%{ opacity:0; transform:translateY(0) scale(.6) } 20%{ opacity:1 } 100%{ transform:translateY(-38px) scale(1); opacity:0 } }
+      @keyframes typing { from { max-width:0 } to { max-width:240px } }
+      @keyframes blink { 50%{ border-color:transparent } }
+      @keyframes pop { 0%{ transform: scale(.92); opacity:0 } 60%{ transform: scale(1.06); opacity:1 } 100%{ transform: scale(1); opacity:1 } }
+      section { margin: 0; padding: 12px 0 }
+      section + section { border-top: 1px solid #e9edf0; padding-top: 14px; margin-top: 12px }
+      h2 { margin: 0 0 8px 0 }
+      ul { padding-left: 1.2rem; margin:0 }
+      footer { text-align:center; color:var(--muted); font-size:0.9rem; margin-top:18px }
+      a { color: var(--accent) }
+
+      /* edit button styling */
+      .btn { background:#fff; border:1px solid #ccc; padding:6px 10px; border-radius:6px; cursor:pointer }
+      .btn.primary{ background:var(--accent); color:#fff; border-color:var(--accent) }
+
+      [contenteditable="true"]:focus{ outline:2px dashed #cfe6ff; outline-offset:4px }
+      /* visible editing state for editable regions */
+      body.editing [contenteditable="true"]{ background: #fffef6; border-radius:6px; padding:6px }
+
+      @media (max-width:600px){ .profile-row{flex-direction:column; text-align:center} .profile-info{text-align:center} }
+    </style>
+  </head>
+  <body>
+    <!-- old header removed; hero will become the new header below -->
+
+    <!-- Welcome splash shown on first load, then hidden to reveal content -->
+    <div id="splash" class="splash" role="dialog" aria-label="Welcome screen">
+      <div class="splash-inner">
+        <div class="avatar-wrap">
+          <div class="ring"></div>
+          <img class="avatar" src="Screenshot 2026-01-18 231140.png" alt="Mohit" />
+        </div>
+        <h1 class="splash-title">Welcome</h1>
+        <p class="sub"><span class="typing">to Mohit Srivastav</span></p>
+        <div class="confetti" aria-hidden>
+          <span class="dot d1"></span>
+          <span class="dot d2"></span>
+          <span class="dot d3"></span>
+          <span class="dot d4"></span>
+          <span class="dot d5"></span>
+            <span class="dot d6"></span>
+            <span class="dot d7"></span>
+        </div>
+          <button id="enterBtn" class="enter-btn" aria-label="Enter site">Enter site</button>
+          <p class="skip" style="font-size:12px;color:#9aa3b2;margin:6px 0 0">Click or press Enter to skip</p>
+      </div>
+    </div>
+
+    <main>
+      <header class="ig-header">
+        <div class="hero">
+          <div class="hero-left">
+            <div class="name-row">
+              <h1 id="displayName" data-key="displayName" data-default="MOHIT SRIVASTAV">MOHIT SRIVASTAV</h1>
+            </div>
+            <div id="handle" data-key="handle" data-default="@_mohitsrivastav" class="handle">@_mohitsrivastav</div>
+            <p id="bio" class="lead" data-key="bio" data-default="Software developer. Web & mobile apps. Open-source contributor.">Software developer building web & mobile apps. I design clean, accessible experiences and ship reliable code.</p>
+            <div class="cta">
+              <button id="learnBtn" class="enter-btn no-export">See my skills</button>
+              <button id="contactBtn" class="btn no-export" style="margin-left:8px">Contact me</button>
+            </div>
+          </div>
+          <div class="hero-right">
+            <img id="profileImg" class="profile" src="Screenshot 2026-01-18 231140.png" alt="Mohit" style="width:120px;height:120px;border-radius:16px;object-fit:cover;box-shadow:0 12px 30px rgba(6,95,212,0.12)" />
+          </div>
+        </div>
+      </header>
+
+      <section id="skillsSection" class="card" data-key="skills" data-default="<ul><li>Web: HTML, CSS, JavaScript, React, Angular</li><li>Mobile: Flutter, React Native</li><li>Backend & Languages: Python, Java, C++</li><li>Databases: MySQL, MongoDB</li></ul>">
+        <h2>Skills</h2>
+        <div id="skillsContent"> <div class="grid"><div>
+          <li>Web: HTML, CSS, JavaScript, React, Angular</li>
+          <li>Mobile: Flutter, React Native</li>
+        </div><div>
+          <li>Backend & Languages: Python, Java, C++</li>
+          <li>Databases: MySQL, MongoDB</li>
+        </div></div></div>
+      </section>
+      <section id="contactSection" class="card" data-key="contact" data-default="<ul> <li>Email: <a href='mailto:srivastavmohit381@gmail.com'>srivastavmohit381@gmail.com </a> </li> <li>Phone: +91 7236021681</li><li>LinkedIn: <a href='https://www.linkedin.com/in/mohit-srivastav-757166382?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app'>mohit-srivastav</a></li><li>Instagram: <a href='https://www.instagram.com/_mohitsrivastav_2'>_mohitsrivastav_2</a></li></ul>">
+        <h2>Contact</h2>
+        <div id="contactContent"> <ul>
+          <li>Email: <a href='mailto:srivastavmohit381@gmail.com'>srivastavmohit381@gmail.com</a></li>
+          <li>Phone: +91 7236021681</li>
+          <li>LinkedIn: <a href='https://www.linkedin.com/in/mohit-srivastav-757166382?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app'>mohit-srivastav</a></li>
+          <li>Instagram: <a href='https://www.instagram.com/_mohitsrivastav_2'>_mohitsrivastav_2</a></li>
+        </ul></div>
+      </section>
+
+      <section id="projectsSection" data-key="projects" data-default="<ul><li><strong>Project A:</strong> Responsive e-commerce site (React, Node.js)</li><li><strong>Project B:</strong> Fitness mobile app (Flutter)</li><li><strong>Project C:</strong> Open-source data analysis tools</li></ul>">
+        <h2>Projects</h2>
+        <div id="projectsContent"> <ul>
+          <li><strong>Project A:</strong> Responsive e-commerce site (React, Node.js)</li>
+          <li><strong>Project B:</strong> Fitness mobile app (Flutter)</li>
+          <li><strong>Project C:</strong> Open-source data analysis tools</li>
+        </ul></div>
+      </section>
+
+      
+    </main>
+
+    <footer>
+      © 2026 Mohit Srivastav
+      <div class="edit-actions" style="display:none">
+        <button id="editBtn" class="btn">Edit profile</button>
+        <button id="saveBtn" class="btn primary" style="display:none">Save</button>
+        <button id="cancelBtn" class="btn" style="display:none">Cancel</button>
+        <button id="changeImgBtn" class="btn" style="display:none">Change Image</button>
+      </div>
+    </footer>
+
+    <!-- Visible edit panel: separate section for profile editing -->
+    <section id="editProfileSection" class="card" style="margin:18px 0 6px">
+      <h2>Edit profile</h2>
+      <div id="editControls">
+        <button id="editBtnVisible" class="btn">Edit profile</button>
+        <button id="changeImgBtnVisible" class="btn" style="display:none;margin-left:8px">Change Image</button>
+        <button id="saveBtnVisible" class="btn primary" style="display:none;margin-left:8px">Save</button>
+        <button id="cancelBtnVisible" class="btn" style="display:none;margin-left:8px">Cancel</button>
+      </div>
+      <p style="font-size:0.9rem;color:#666;margin-top:8px">Open this panel to update your name, bio and profile image. Click "Edit profile" to begin.</p>
+      <div style="margin-top:12px">
+        <button id="downloadBtn" class="btn">Download profile</button>
+        <div id="downloadOptions" style="display:none;margin-top:8px">
+          <button id="downloadPNG" class="btn" style="margin-right:8px">Download as Photo (PNG)</button>
+          <button id="downloadPDF" class="btn">Download as PDF</button>
+        </div>
+      </div>
+    </section>
+
+    <script>
+      // Sections and elements that can be edited
+      const editableMap = {
+        displayName: document.getElementById('displayName'),
+        handle: document.getElementById('handle'),
+        bio: document.getElementById('bio'),
+        skills: document.getElementById('skillsContent'),
+        projects: document.getElementById('projectsContent'),
+        contact: document.getElementById('contactContent')
+      };
+
+      const editBtn = document.getElementById('editBtn');
+      const saveBtn = document.getElementById('saveBtn');
+      const cancelBtn = document.getElementById('cancelBtn');
+
+      // store defaults to allow cancel (initial snapshot)
+      const defaults = {};
+      Object.keys(editableMap).forEach(k=> defaults[k] = editableMap[k].innerHTML);
+      const profileImgEl = document.getElementById('profileImg');
+      const avatarEl = document.querySelector('.avatar');
+      const changeImgBtn = document.getElementById('changeImgBtn');
+      const imgInput = document.createElement('input');
+      imgInput.type = 'file'; imgInput.accept = 'image/*'; imgInput.style.display = 'none'; imgInput.id = 'imgInput';
+      document.body.appendChild(imgInput);
+      const defaultImage = profileImgEl ? profileImgEl.src : '';
+
+      function setEditing(on){
+        Object.values(editableMap).forEach(el=> el.contentEditable = on);
+        if(on){
+          document.body.classList.add('editing');
+          editBtn.style.display = 'none';
+          saveBtn.style.display = '';
+          cancelBtn.style.display = '';
+          changeImgBtn.style.display = '';
+          // focus first editable field
+          const first = editableMap.displayName || Object.values(editableMap)[0];
+          first.focus();
+          // place caret at end
+          const range = document.createRange();
+          range.selectNodeContents(first);
+          range.collapse(false);
+          const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range);
+        } else {
+          document.body.classList.remove('editing');
+          editBtn.style.display = '';
+          saveBtn.style.display = 'none';
+          cancelBtn.style.display = 'none';
+          changeImgBtn.style.display = 'none';
+        }
+      }
+
+      editBtn.addEventListener('click', ()=> setEditing(true));
+      saveBtn.addEventListener('click', ()=>{
+        Object.keys(editableMap).forEach(k=>{
+          localStorage.setItem('profile.'+k, editableMap[k].innerHTML);
+        });
+        // persist image if changed
+        if(profileImgEl && profileImgEl.dataset.pendingSrc){
+          localStorage.setItem('profile.image', profileImgEl.dataset.pendingSrc);
+          profileImgEl.src = profileImgEl.dataset.pendingSrc;
+          if(avatarEl) avatarEl.src = profileImgEl.dataset.pendingSrc;
+          delete profileImgEl.dataset.pendingSrc;
+        }
+        setEditing(false);
+      });
+      cancelBtn.addEventListener('click', ()=>{
+        // reload from storage or defaults
+        Object.keys(editableMap).forEach(k=>{
+          const stored = localStorage.getItem('profile.'+k);
+          editableMap[k].innerHTML = stored || defaults[k];
+        });
+        // restore image from storage or default
+        const storedImg = localStorage.getItem('profile.image');
+        if(profileImgEl){ profileImgEl.src = storedImg || defaultImage; if(avatarEl) avatarEl.src = storedImg || defaultImage; delete profileImgEl.dataset.pendingSrc }
+        setEditing(false);
+      });
+
+      // keyboard shortcuts: Ctrl+S to save, Esc to cancel when editing
+      document.addEventListener('keydown', (e)=>{
+        const isEditing = document.body.classList.contains('editing');
+        if(!isEditing) return;
+        if((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's'){
+          e.preventDefault();
+          saveBtn.click();
+        }
+        if(e.key === 'Escape'){
+          e.preventDefault();
+          cancelBtn.click();
+        }
+      });
+
+      // initialize on load
+      document.addEventListener('DOMContentLoaded', ()=>{
+        Object.keys(editableMap).forEach(k=>{
+          const saved = localStorage.getItem('profile.'+k);
+          if(saved) editableMap[k].innerHTML = saved;
+        });
+        setEditing(false);
+      });
+      // load profile image if stored
+      (function(){
+        const storedImg = localStorage.getItem('profile.image');
+        if(storedImg && profileImgEl){ profileImgEl.src = storedImg; if(avatarEl) avatarEl.src = storedImg }
+      })();
+
+      // Download (PNG / PDF) handlers using html2canvas + jsPDF
+      (function(){
+        // show/hide options
+        const downloadBtn = document.getElementById('downloadBtn');
+        const downloadOptions = document.getElementById('downloadOptions');
+        const downloadPNG = document.getElementById('downloadPNG');
+        const downloadPDF = document.getElementById('downloadPDF');
+        const target = document.querySelector('header.ig-header') || document.querySelector('.hero');
+
+        if(downloadBtn){
+          downloadBtn.addEventListener('click', ()=>{
+            if(downloadOptions.style.display === 'none') downloadOptions.style.display = '';
+            else downloadOptions.style.display = 'none';
+          });
+        }
+
+        async function captureAsCanvas(){
+          // Prefer cloning header+main into an offscreen container and capturing that so full content is included
+          if(window.html2canvas){
+            try{
+              const headerEl = document.querySelector('header.ig-header');
+              const mainEl = document.querySelector('main');
+              if(headerEl && mainEl){
+                const temp = document.createElement('div');
+                temp.style.position = 'absolute';
+                temp.style.left = '-99999px';
+                temp.style.top = '0';
+                temp.style.background = '#fff';
+                temp.style.padding = '20px';
+                  // clone nodes to preserve current content without splash overlay
+                  // avoid duplicating header if header is inside main
+                  if(mainEl.contains(headerEl)){
+                    temp.appendChild(mainEl.cloneNode(true));
+                  } else {
+                    temp.appendChild(headerEl.cloneNode(true));
+                    temp.appendChild(mainEl.cloneNode(true));
+                  }
+                  // remove elements marked no-export (CTAs etc.) from the clone
+                  const removeNoExport = temp.querySelectorAll('.no-export');
+                  removeNoExport.forEach(n=> n.parentNode && n.parentNode.removeChild(n));
+                document.body.appendChild(temp);
+                // wait a tick for images to start loading in clones
+                await new Promise(r => setTimeout(r, 120));
+                const canvas = await window.html2canvas(temp, {backgroundColor: null, scale: 2});
+                document.body.removeChild(temp);
+                return canvas;
+              }
+              // fallback to capturing the target element (header or hero)
+              return await window.html2canvas(target, {backgroundColor: null, scale: 2});
+            }catch(err){
+              console.warn('html2canvas clone capture failed, falling back to body capture', err);
+              return await window.html2canvas(document.body, {backgroundColor: null, scale: 2});
+            }
+          }
+          // fallback: draw a simple canvas with key profile info
+          const canvas = document.createElement('canvas');
+          canvas.width = 1000; canvas.height = 600;
+          const ctx = canvas.getContext('2d');
+          ctx.fillStyle = '#fff'; ctx.fillRect(0,0,canvas.width,canvas.height);
+          const imgEl = document.getElementById('profileImg');
+          if(imgEl && imgEl.src){
+            try{
+              const img = await new Promise(res=>{ const i=new Image(); i.crossOrigin='anonymous'; i.onload=()=>res(i); i.onerror=()=>res(null); i.src=imgEl.src; });
+              if(img) ctx.drawImage(img, 24, 24, 160, 160);
+            }catch(e){}
+          }
+          ctx.fillStyle = '#0b2447'; ctx.font = '28px Arial'; ctx.fillText(document.getElementById('displayName').innerText || '', 200, 72);
+          ctx.fillStyle = '#475569'; ctx.font = '18px Arial'; ctx.fillText(document.getElementById('handle').innerText || '', 200, 104);
+          ctx.fillStyle = '#333'; ctx.font = '16px Arial';
+          const bio = document.getElementById('bio').innerText || '';
+          ctx.fillText(bio, 24, 220);
+          return canvas;
+        }
+
+        // Ensure final canvas is portrait-oriented (height >= width)
+        function ensurePortraitCanvas(srcCanvas){
+          if(!srcCanvas) return srcCanvas;
+          if(srcCanvas.width <= srcCanvas.height) return srcCanvas; // already portrait
+          const w = srcCanvas.width, h = srcCanvas.height;
+          const out = document.createElement('canvas');
+          out.width = h; // swapped to make height > width
+          out.height = w;
+          const ctx = out.getContext('2d');
+          ctx.save();
+          // move to center and rotate 90deg to convert landscape -> portrait
+          ctx.translate(out.width / 2, out.height / 2);
+          ctx.rotate(Math.PI / 2);
+          // draw the source centered (no scaling, sizes are swapped)
+          ctx.drawImage(srcCanvas, -w / 2, -h / 2, w, h);
+          ctx.restore();
+          return out;
+        }
+
+        if(downloadPNG){
+          downloadPNG.addEventListener('click', async ()=>{
+            try{
+              const canvas = await captureAsCanvas();
+              const pCanvas = ensurePortraitCanvas(canvas);
+              const dataUrl = pCanvas.toDataURL('image/png');
+              const a = document.createElement('a'); a.href = dataUrl; a.download = 'profile.png'; a.click();
+            }catch(err){ alert('Download failed: '+err.message); }
+          });
+        }
+
+        if(downloadPDF){
+          downloadPDF.addEventListener('click', async ()=>{
+            try{
+              const canvas = await captureAsCanvas();
+              const pCanvas = ensurePortraitCanvas(canvas);
+              const imgData = pCanvas.toDataURL('image/png');
+              if(window.jspdf && window.jspdf.jsPDF){
+                const doc = new window.jspdf.jsPDF({orientation:'portrait', unit:'px', format:[pCanvas.width, pCanvas.height]});
+                doc.addImage(imgData, 'PNG', 0, 0, pCanvas.width, pCanvas.height);
+                doc.save('profile.pdf');
+              } else if(window.jsPDF){
+                const doc = new window.jsPDF('portrait', 'px', [pCanvas.width, pCanvas.height]);
+                doc.addImage(imgData, 'PNG', 0, 0, pCanvas.width, pCanvas.height);
+                doc.save('profile.pdf');
+              } else {
+                // fallback: open image in new tab and let user print/save as PDF
+                const w = window.open(); w.document.body.innerHTML = '<img src="'+imgData+'" style="max-width:100%">';
+              }
+            }catch(err){ alert('PDF generation failed: '+err.message); }
+          });
+        }
+      })();
+
+      // change image flow
+      changeImgBtn.addEventListener('click', ()=> imgInput.click());
+      imgInput.addEventListener('change', (ev)=>{
+        const file = ev.target.files && ev.target.files[0];
+        if(!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e){
+          const data = e.target.result;
+          // preview immediately, but don't persist until Save
+          if(profileImgEl){ profileImgEl.dataset.pendingSrc = data; profileImgEl.src = data }
+          if(avatarEl) avatarEl.src = data;
+        };
+        reader.readAsDataURL(file);
+      });
+      // Splash behavior: hide splash after delay and reveal content (robust to readyState)
+      (function(){
+        const splash = document.getElementById('splash');
+        function showContent(){
+          document.body.classList.add('content-visible');
+          if(splash) splash.classList.add('hidden');
+          // remove splash from DOM after transition
+          setTimeout(()=>{ if(splash && splash.parentNode) splash.parentNode.removeChild(splash); }, 800);
+        }
+
+        function setupSplash(){
+          const t = setTimeout(showContent, 1800);
+          if(!splash){ showContent(); return; }
+          splash.addEventListener('click', ()=>{ clearTimeout(t); showContent(); });
+          const enterBtn = document.getElementById('enterBtn');
+          if(enterBtn) enterBtn.addEventListener('click', ()=>{ clearTimeout(t); showContent(); });
+          function onKey(e){
+            if(!splash || splash.classList.contains('hidden')) return;
+            if(e.key === 'Enter' || e.key === ' '){ clearTimeout(t); showContent(); document.removeEventListener('keydown', onKey); }
+          }
+          document.addEventListener('keydown', onKey);
+        }
+
+        if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', setupSplash);
+        else setupSplash();
+      })();
+
+      // Hero CTA behavior: smooth scroll and contact action
+      (function(){
+        const learnBtn = document.getElementById('learnBtn');
+        const contactBtn = document.getElementById('contactBtn');
+        const skills = document.getElementById('skillsSection');
+        if(learnBtn && skills){
+          learnBtn.addEventListener('click', ()=> skills.scrollIntoView({behavior:'smooth', block:'start'}));
+        }
+        if(contactBtn){
+          contactBtn.addEventListener('click', ()=>{
+            const contact = document.getElementById('contactSection');
+            if(contact) contact.scrollIntoView({behavior:'smooth', block:'start'});
+          });
+        }
+      })();
+
+      // Visible edit-panel wiring (connect visible controls to existing logic)
+      (function(){
+        const editVisible = document.getElementById('editBtnVisible');
+        const changeImgVisible = document.getElementById('changeImgBtnVisible');
+        const saveVisible = document.getElementById('saveBtnVisible');
+        const cancelVisible = document.getElementById('cancelBtnVisible');
+
+        function updateVisibleButtons(){
+          const editing = document.body.classList.contains('editing');
+          if(editVisible) editVisible.style.display = editing ? 'none' : '';
+          if(changeImgVisible) changeImgVisible.style.display = editing ? '' : 'none';
+          if(saveVisible) saveVisible.style.display = editing ? '' : 'none';
+          if(cancelVisible) cancelVisible.style.display = editing ? '' : 'none';
+        }
+
+        if(editVisible) editVisible.addEventListener('click', ()=>{ setEditing(true); updateVisibleButtons(); });
+        if(changeImgVisible) changeImgVisible.addEventListener('click', ()=> imgInput.click());
+        if(saveVisible) saveVisible.addEventListener('click', ()=>{ saveBtn.click(); updateVisibleButtons(); });
+        if(cancelVisible) cancelVisible.addEventListener('click', ()=>{ cancelBtn.click(); updateVisibleButtons(); });
+
+        // keep visible buttons synced
+        document.addEventListener('DOMContentLoaded', updateVisibleButtons);
+        // listen for clicks/keys that may change editing state
+        document.addEventListener('click', updateVisibleButtons);
+        document.addEventListener('keydown', updateVisibleButtons);
+      })();
+    </script>
+    <!-- External libs for capture/download (html2canvas + jsPDF). They load from CDN only when online. -->
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  </body>
+</html>
